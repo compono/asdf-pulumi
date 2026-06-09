@@ -1,32 +1,10 @@
 #!/usr/bin/env bash
 
-# Copyright (C) 2019-2020 Jorge Canha
-# 
-# This file is part of asdf-pulumi.
-# 
-# asdf-pulumi is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# asdf-pulumi is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with asdf-pulumi.  If not, see <http://www.gnu.org/licenses/>.
-
 set -euo pipefail
 
 current_script_path=${BASH_SOURCE[0]}
 plugin_dir=$(dirname "$(dirname "$current_script_path")")
 
-# shellcheck source=../lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
-
-[ -z "${ASDF_INSTALL_TYPE+x}" ] && echo "ASDF_INSTALL_TYPE is required" && exit 1
-[ -z "${ASDF_INSTALL_VERSION+x}" ] && echo "ASDF_INSTALL_VERSION is required" && exit 1
-[ -z "${ASDF_INSTALL_PATH+x}" ] && echo "ASDF_INSTALL_PATH is required" && exit 1
 
 install_version "$ASDF_INSTALL_TYPE" "$ASDF_INSTALL_VERSION" "$ASDF_INSTALL_PATH"

@@ -1,43 +1,33 @@
 #!/usr/bin/env bash
 
-# Copyright (C) 2019-2020 Jorge Canha
-# 
-# This file is part of asdf-pulumi.
-# 
-# asdf-pulumi is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# asdf-pulumi is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with asdf-pulumi.  If not, see <http://www.gnu.org/licenses/>.
-
 set -euo pipefail
 
 current_script_path=${BASH_SOURCE[0]}
 plugin_dir=$(dirname "$(dirname "$current_script_path")")
 
-# shellcheck source=../lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
 mkdir -p "$ASDF_DOWNLOAD_PATH"
 
-platform=$(get_platform)
-arch=$(get_architecture)
+release_file="${ASDF_DOWNLOAD_PATH}/$(release_filename "$ASDF_INSTALL_VERSION")"
 
-release_basename="${TOOL_NAME}-v${ASDF_INSTALL_VERSION}-${platform}-${arch}.tar.gz"
-release_file="${ASDF_DOWNLOAD_PATH}/${release_basename}"
+# Download the release archive to the download directory.
+download_release "$ASDF_INSTALL_VERSION" "$release_file"
 
-# Download tar.gz file to the download directory
-download_release "${ASDF_INSTALL_VERSION}" "${release_basename}" "${release_file}"
+# Extract contents into the download directory. The pulumi archive has a single
+# top-level "pulumi/" directory, so strip it to land the binaries directly.
+if [[ $release_file == *.zip ]]; then
+  unzip -qo "$release_file" -d "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+  # The zip nests everything under "pulumi/"; flatten it.
+  if [ -d "${ASDF_DOWNLOAD_PATH}/pulumi/bin" ]; then
+    mv "${ASDF_DOWNLOAD_PATH}/pulumi/bin/"* "$ASDF_DOWNLOAD_PATH"
+  else
+    mv "${ASDF_DOWNLOAD_PATH}/pulumi/"* "$ASDF_DOWNLOAD_PATH"
+  fi
+  rm -rf "${ASDF_DOWNLOAD_PATH}/pulumi"
+else
+  tar -xzf "$release_file" -C "$ASDF_DOWNLOAD_PATH" --strip-components=1 || fail "Could not extract $release_file"
+fi
 
-#  Extract contents of tar.gz file into the download directory
-tar -xzf "$release_file" -C "${ASDF_DOWNLOAD_PATH}" --strip-components=1 || fail "Could not extract $release_file"
-
-# Remove the tar.gz file since we don't need to keep it
+# Remove the downloaded archive; it is no longer needed.
 rm "$release_file"
